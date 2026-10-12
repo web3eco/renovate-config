@@ -22,28 +22,36 @@ Last-wins merge: any key a consumer writes locally overrides this preset.
 | Area | Behaviour |
 |---|---|
 | **Schedule** | Dev-deps weekly (Mon 06:00 Europe/Berlin), prod-deps monthly (1st), lockfile refresh Sunday |
-| **Dev-deps** | Grouped, `automerge: true` + `platformAutomerge: true`, `minimumReleaseAge: 3 days` |
-| **Prod-deps** | Grouped monthly, manual review required |
-| **github-actions** | `pinDigests: true` → rewrites `@v5` to `<full-sha>#v5`, preserving SHA-pinning discipline |
+| **Dev-deps** | Grouped, weekly, `minimumReleaseAge: 3 days` — **manual merge, approval required** |
+| **Prod-deps** | Grouped monthly, manual review |
+| **github-actions** | `pinDigests: true` → rewrites `@v5` to `<full-sha>#v5`, manual merge |
 | **shared-actions** | Monthly, manual review — digest bumps are security-sensitive |
-| **@types/**, **eslint** | Grouped weekly, automerge |
+| **@types/**, **eslint** | Grouped weekly, manual merge |
 | **Major bumps** | Always manual, never auto-merged |
 | **Vulns** | `vulnerabilityAlerts` on, OSV.dev as secondary source |
 | **PR limit** | `prConcurrentLimit: 10` |
 | **Branch prefix** | `renovate/` |
 
+### Why there is no automerge
+
+Org policy (decided 2026-10-12): **every merge requires a human approval.**
+Consumer branch protection runs with `allow_auto_merge: false`, so GitHub-side
+automerge is unavailable by design.
+
+The preset therefore contains **no `automerge`, no `automergeType`, and no
+`platformAutomerge` keys anywhere**, and does not extend `:automergeMinor` /
+`:automergePatch` (which would set `automerge: true` implicitly).
+
+This is deliberate rather than an oversight. Keeping `automerge: true` while
+`allow_auto_merge` is `false` would mark every PR "ready to merge" and then
+leave them sitting forever — the worst of both worlds. If org policy ever moves
+to allowing auto-merge for low-risk updates, re-enable it here *and* flip
+`allow_auto_merge: true` in the same change, so the two never disagree.
+
 ### Why `minimumReleaseAge: 3 days`
 
 Renovate won't propose a version until it's been released ≥3 days. Catches
 yank-prone releases that would otherwise land straight into `main`.
-
-### Why `platformAutomerge`
-
-Instead of polling Renovate's own synthetic CI check, this defers to GitHub
-branch protection's required-checks list. Faster and more reliable.
-
-⚠️ **Requires `allow_auto_merge: true` on the consumer's `main` branch
-protection.** See "Known gaps" below.
 
 ---
 
@@ -76,29 +84,33 @@ back to `@web3eco/platform-team` and re-run `jq -e` validation.
 
 Until this is done the preset is inert — nothing will open PRs.
 
-### 3. `allow_auto_merge` is not enabled on any consumer repo
+### 3. `allow_auto_merge` is disabled org-wide (resolved as policy, not a gap)
 
-Checked all 14 candidate repos. Result: `not-set` on **14/14**.
+Checked all 14 candidate repos: `allow_auto_merge` is `not-set` on **14/14**.
+Only `blockchain`, `payments`, `referrals`, and `agent-context` have any branch
+protection on `main` at all.
 
-Also, **11 of 14 have no branch protection on `main` at all**. Only
-`blockchain`, `payments`, `referrals`, and `agent-context` are protected.
+**Decision (2026-10-12):** this is now the intended state, not a defect. Org
+policy is *"merge only with an explicit approval"*, so `allow_auto_merge: false`
+everywhere and no automerge in this preset (see "Why there is no automerge"
+above).
 
-Impact: `platformAutomerge: true` in the dev-deps rule will not merge
-anything. Renovate PRs will sit as "ready to merge" awaiting a human click.
+Consequence: **all Renovate PRs require a human to click Merge.** Grouping keeps
+the volume tolerable (~4 groups/week instead of ~30 single-package PRs), but
+nobody gets a hands-off pipeline until policy changes.
 
-**To do**: for each target repo, either
-- (a) enable `allow_auto_merge` on existing branch protection, or
-- (b) add branch protection first (required reviews + status checks), or
-- (c) set `"platformAutomerge": false` in the consumer's own `.renovaterc.json`
-    as a per-repo override.
+If that trade-off stops being acceptable, the change is two-sided and must be
+done together:
 
-Option (c) is the least invasive and is safe to defer.
+1. Flip `allow_auto_merge: true` on the consumer's `main` branch protection.
+2. Re-add `automerge`/`platformAutomerge` to the affected rules here.
 
 ### 4. Repo inventory is larger than the plan assumed
 
 Plan expected ~30 org repos; actual count is **38**. The preset itself is
 unaffected (it is org-wide), but the propagation list in the plan needs
-reconciling before Phase 2.
+reconciling before Phase 2. Scope was narrowed deliberately: rollout targets
+the primary backend repos, not the full org. `balances` is out of scope.
 
 ---
 
