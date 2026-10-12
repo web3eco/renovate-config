@@ -1,0 +1,4 @@
+# Policy changes to the shared Renovate preset require platform review.
+# @web3eco/platform-team does not exist yet (verified 404, 2026-10-09).
+# Fallback per plan 02 §Phase 0: sole maintainer until the team is created.
+@vladimirmyshkovski
