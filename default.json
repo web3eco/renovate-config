@@ -1,0 +1,110 @@
+{
+  "schedule": ["before 6am on monday"],
+  "timezone": "Europe/Berlin",
+  "labels": ["dependencies", "renovate"],
+  "commitMessagePrefix": "chore(deps):",
+  "commitMessageTopic": "{{depName}}",
+  "commitMessageAction": "update",
+  "commitMessageExtra": "to {{newVersion}}{{#if isLockfileUpdate}} (lockfile){{/if}}",
+  "extends": [":automergeMinor", ":automergePatch", ":enableVulnerabilityAlerts"],
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "labels": ["security", "dependencies"],
+    "assignees": ["@vladimirmyshkovski"]
+  },
+  "osvVulnerabilityAlerts": true,
+  "packageRules": [
+    {
+      "description": "Dev dependencies — weekly, auto-merge on CI green",
+      "matchDepTypes": ["dev", "devDependencies"],
+      "matchCategories": ["linting", "testing", "development"],
+      "schedule": ["before 6am on monday"],
+      "groupName": "dev dependencies (weekly)",
+      "automerge": true,
+      "automergeType": "pr",
+      "platformAutomerge": true,
+      "minimumReleaseAge": "3 days"
+    },
+    {
+      "description": "Production dependencies — monthly, require manual review",
+      "matchDepTypes": ["dependencies", "production"],
+      "schedule": ["before 6am on the 1st day of the month"],
+      "groupName": "production dependencies (monthly)",
+      "automerge": false,
+      "commitMessageTopic": "prod {{depName}}",
+      "labels": ["dependencies", "prod"],
+      "reviewers": ["@vladimirmyshkovski"]
+    },
+    {
+      "description": "GitHub Actions — SHA-pinned, weekly digest bumps",
+      "matchManagers": ["github-actions"],
+      "schedule": ["before 6am on monday"],
+      "groupName": "github-actions",
+      "automerge": true,
+      "commitMessageTopic": "github-actions digest",
+      "pinDigests": true
+    },
+    {
+      "description": "shared-actions — pin to approved tag, require review",
+      "matchManagers": ["github-actions"],
+      "matchPackageNames": ["web3eco/shared-actions"],
+      "schedule": ["before 6am on the 1st day of the month"],
+      "automerge": false,
+      "groupName": "web3eco shared-actions",
+      "reviewers": ["@vladimirmyshkovski"],
+      "labels": ["dependencies", "shared-actions"]
+    },
+    {
+      "description": "TypeScript @types/* — grouped weekly",
+      "matchPackageNames": ["^@types/"],
+      "schedule": ["before 6am on monday"],
+      "groupName": "@types",
+      "automerge": true
+    },
+    {
+      "description": "ESLint ecosystem — grouped weekly",
+      "matchPackageNames": ["^eslint", "^@eslint/"],
+      "schedule": ["before 6am on monday"],
+      "groupName": "eslint",
+      "automerge": true
+    },
+    {
+      "description": "Major version bumps — always manual review",
+      "matchUpdateTypes": ["major"],
+      "automerge": false,
+      "labels": ["dependencies", "major"],
+      "reviewers": ["@vladimirmyshkovski"]
+    },
+    {
+      "description": "Lockfile refresh — weekly, no version bumps",
+      "matchUpdateTypes": ["lockFileMaintenance"],
+      "schedule": ["before 6am on sunday"],
+      "groupName": "lockfile maintenance",
+      "automerge": true,
+      "commitMessageTopic": "refresh lockfiles"
+    },
+    {
+      "description": "Repos on bun — only consider bun.lockb, ignore package-lock.json",
+      "matchManagers": ["npm"],
+      "enabled": false,
+      "matchFileNames": []
+    }
+  ],
+  "customDatasources": {},
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 6am on sunday"]
+  },
+  "ignorePaths": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/build/**",
+    "**/.aws-sam/**",
+    "**/vendor/**",
+    "**/archived/**"
+  ],
+  "branchPrefix": "renovate/",
+  "rebaseWhen": "behind-base-branch",
+  "prConcurrentLimit": 10,
+  "ignoreTests": false
+}
