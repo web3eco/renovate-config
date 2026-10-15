@@ -146,6 +146,15 @@
       ],
       "enabled": false,
       "matchFileNames": []
+    },
+    {
+      "description": "@web3eco/* — resolve from GitHub Packages, not public npm",
+      "matchPackageNames": [
+        "@web3eco/*"
+      ],
+      "registryUrls": [
+        "https://npm.pkg.github.com/"
+      ]
     }
   ],
   "customDatasources": {},
@@ -166,5 +175,11 @@
   "branchPrefix": "renovate/",
   "rebaseWhen": "behind-base-branch",
   "prConcurrentLimit": 10,
-  "ignoreTests": false
+  "ignoreTests": false,
+  "hostRules": [
+    {
+      "matchHost": "npm.pkg.github.com",
+      "token": "{{ secrets.GITHUB_PAT }}"
+    }
+  ]
 }
